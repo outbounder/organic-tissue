@@ -1,0 +1,24 @@
+{
+  "name": "organic-tissue",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine-node ./tests/"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/outbounder/organic-tissue.git"
+  },
+  "dependencies": {
+    "organic": "0.1.1",
+    "shelljs": "0.1.2",
+    "glob": "3.1.14",
+    "underscore": "1.4.4",
+    "async": "0.2.9"
+  },
+  "devDependencies": {
+    "jasmine-node": "latest",
+    "shelljs": "latest"
+  },
+  "license": "MIT"
+}
