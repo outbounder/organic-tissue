@@ -15,8 +15,8 @@ describe("Tissue", function(){
     plasma.emit({type: "Tissue", action: "start", target: __dirname+"/data/cell.js"}, this, function(c){
       expect(c instanceof Error).toBe(false);
       childCell = c.data;
-      expect(fs.existsSync("cell.js.out")).toBe(true);
-      expect(fs.existsSync("cell.js.err")).toBe(true);
+      expect(fs.existsSync(__dirname+"/data/cell.js.out")).toBe(true);
+      expect(fs.existsSync(__dirname+"/data/cell.js.err")).toBe(true);
       next();
     });
   });
@@ -25,16 +25,35 @@ describe("Tissue", function(){
     setTimeout(function(){
       plasma.emit({type: "Tissue", action: "stop", target: childCell.pid}, this, function(c){
         expect(c instanceof Error).toBe(false);
-        fs.unlink("cell.js.out");
-        fs.unlink("cell.js.err");
+        fs.unlink(__dirname+"/data/cell.js.out");
+        fs.unlink(__dirname+"/data/cell.js.err");
         next();
       });
     }, 2000);
   });
 
-  it("stops all cells", function(next){
-    plasma.emit({type: "Tissue", action: "stopall", target: "cell.js"}, this, function(c){
+  it("stops cells", function(next){
+    plasma.emit({type: "Tissue", action: "stop", target: "cell.js"}, this, function(c){
       expect(c instanceof Error).toBe(false);
+      next();
+    });
+  })
+
+  it("spawns new cell from with cwd and name", function(next){
+    plasma.emit({type: "Tissue", action: "start", target: "cell.js", cwd: __dirname+"/data"}, this, function(c){
+      expect(c instanceof Error).toBe(false);
+      childCell = c.data;
+      expect(fs.existsSync(__dirname+"/data/cell.js.out")).toBe(true);
+      expect(fs.existsSync(__dirname+"/data/cell.js.err")).toBe(true);
+      next();
+    });
+  });
+
+  it("stops cell by pid", function(next){
+    plasma.emit({type: "Tissue", action: "stop", target: childCell.pid}, this, function(c){
+      expect(c instanceof Error).toBe(false);
+      fs.unlink(__dirname+"/data/cell.js.out");
+      fs.unlink(__dirname+"/data/cell.js.err");
       next();
     });
   })
@@ -43,7 +62,7 @@ describe("Tissue", function(){
     plasma.emit({type: "Tissue", action: "start", cmd: "mkdir testdir"}, this, function(c){
       expect(c instanceof Error).toBe(false);
       c.data.on("exit", function(){
-        expect(fs.existsSync(process.cwd()+"/test")).toBe(true);
+        expect(fs.existsSync(process.cwd()+"/testdir")).toBe(true);
         fs.rmdirSync(process.cwd()+"/testdir");
         next();
       })

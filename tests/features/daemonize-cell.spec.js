@@ -3,7 +3,7 @@ var path = require("path");
 var Plasma = require("organic").Plasma;
 var Tissue = require("../../index");
 
-describe("Tissue", function(){
+describe("daemonize-cell", function(){
 
   var plasma = new Plasma();
   var tissue = new Tissue(plasma, {});
@@ -44,7 +44,7 @@ describe("Tissue", function(){
     });
   });
   it("kills the cell", function(next){
-    tissue.stop({target: daemonCell.pid}, function(c){
+    tissue.stop({target: "daemonCell.js"}, function(c){
       expect(c.data.length).toBe(1)
       expect(c.data[0].pid).toBe(daemonCell.pid)
       setTimeout(function(){

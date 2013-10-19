@@ -6,7 +6,8 @@ var tissue = new Tissue(new (require("organic").Plasma), {
 
 
 http.createServer(function(req, res){
-  if(req.url.indexOf("throwException"))
+  if(req.url.indexOf("throwException") !== -1) {
     throw new Error("custom exception")
+  }
   res.end(JSON.stringify({query: req.query, params: req.params, body: req.body}))
-}).listen()
+}).listen(1337)

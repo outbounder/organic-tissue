@@ -12,7 +12,7 @@ var getUserHome = function () {
 }
 
 var checkPid = function(pid, callback) {
-  if(process.platform.indexOf("win") === 0 || process.platform != "darwin") {
+  if(process.platform.indexOf("win") === 0 && process.platform != "darwin") {
     throw new Error("Windows not supported yet");
   } else {
     child_process.exec("ps -p "+pid, function(err, stdout, stderr){
@@ -27,7 +27,10 @@ module.exports = Organel.extend(function Tissue(plasma, config){
   this.config = config;
 
   this.on(config.captureType || "Tissue", function(c, callback){
-    this[c.action](c, callback);
+    if(this[c.action])
+      this[c.action](c, callback);
+    else
+      return false
   });
 
   if(config.bindTo) {
@@ -51,6 +54,7 @@ module.exports = Organel.extend(function Tissue(plasma, config){
     var exceptionWrapper = function(err){
       if(fs.existsSync(self.getCellMarker()))
         fs.unlinkSync(self.getCellMarker());
+      console.error(err.stack)
       process.exit(1);
     }
     process.on("uncaughtException", exceptionWrapper);
@@ -87,8 +91,12 @@ module.exports = Organel.extend(function Tissue(plasma, config){
     var argv = c.argv || [];
 
     var stdio = [];
+
     if(c.target && !c.cwd) {
-      c.cwd = path.dirname(c.target)
+      if(c.target.indexOf("/") !== 0 && c.target.indexOf(":") !== 1)
+        c.cwd = process.cwd()
+      else
+        c.cwd = path.dirname(c.target)
     }
     if(c.target && c.output !== false)  {
       var err = out = path.join(c.cwd, path.basename(c.target));
@@ -122,16 +130,21 @@ module.exports = Organel.extend(function Tissue(plasma, config){
     if(callback) callback(c);
   },
   stop: function(c, callback){
-    this.list({}, function(r){
-      var stopped = [];
-      r.data.forEach(function(entry){
-        if(entry.name == c.target || entry.tissue == c.target || entry.pid == c.target) {
-          process.kill(entry.pid);
-          stopped.push(entry);
-        }
-      });
-      if(callback) callback({data: stopped});
-    })
+    if(isNaN(c.target)) {
+      this.list({}, function(r){
+        var stopped = [];
+        r.data.forEach(function(entry){
+          if(entry.name == c.target || entry.tissue == c.target || entry.pid == c.target) {
+            process.kill(entry.pid);
+            stopped.push(entry);
+          }
+        });
+        if(callback) callback({data: stopped});
+      })
+    } else {
+      process.kill(c.target)
+      if(callback) callback(c.target)
+    }
   },
   restart: function(c, callback) {
     var self = this
