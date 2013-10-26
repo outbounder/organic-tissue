@@ -12,7 +12,7 @@ describe("Tissue", function(){
   });
 
   it("spawns new cell from path", function(next){
-    plasma.emit({type: "Tissue", action: "start", target: __dirname+"/data/cell.js"}, this, function(c){
+    plasma.emit({type: "Tissue", action: "start", target: __dirname+"/data/cell.js"}, function(c){
       expect(c instanceof Error).toBe(false);
       childCell = c.data;
       expect(fs.existsSync(__dirname+"/data/cell.js.out")).toBe(true);
@@ -23,24 +23,17 @@ describe("Tissue", function(){
 
   it("kills the new cell", function(next){
     setTimeout(function(){
-      plasma.emit({type: "Tissue", action: "stop", target: childCell.pid}, this, function(c){
+      plasma.emit({type: "Tissue", action: "stop", target: __dirname+"/data/cell.js"}, function(c){
         expect(c instanceof Error).toBe(false);
         fs.unlink(__dirname+"/data/cell.js.out");
         fs.unlink(__dirname+"/data/cell.js.err");
         next();
       });
-    }, 2000);
+    }, 500);
   });
 
-  it("stops cells", function(next){
-    plasma.emit({type: "Tissue", action: "stop", target: "cell.js"}, this, function(c){
-      expect(c instanceof Error).toBe(false);
-      next();
-    });
-  })
-
   it("spawns new cell from with cwd and name", function(next){
-    plasma.emit({type: "Tissue", action: "start", target: "cell.js", cwd: __dirname+"/data"}, this, function(c){
+    plasma.emit({type: "Tissue", action: "start", target: "cell.js", cwd: __dirname+"/data"}, function(c){
       expect(c instanceof Error).toBe(false);
       childCell = c.data;
       expect(fs.existsSync(__dirname+"/data/cell.js.out")).toBe(true);
@@ -49,8 +42,8 @@ describe("Tissue", function(){
     });
   });
 
-  it("stops cell by pid", function(next){
-    plasma.emit({type: "Tissue", action: "stop", target: childCell.pid}, this, function(c){
+  it("stops cell by cwd and name", function(next){
+    plasma.emit({type: "Tissue", action: "stop", target: "cell.js", cwd: __dirname+"/data"}, function(c){
       expect(c instanceof Error).toBe(false);
       fs.unlink(__dirname+"/data/cell.js.out");
       fs.unlink(__dirname+"/data/cell.js.err");
@@ -59,7 +52,7 @@ describe("Tissue", function(){
   })
 
   it("execs a command", function(next){
-    plasma.emit({type: "Tissue", action: "start", cmd: "mkdir testdir"}, this, function(c){
+    plasma.emit({type: "Tissue", action: "start", cmd: "mkdir testdir"}, function(c){
       expect(c instanceof Error).toBe(false);
       c.data.on("exit", function(){
         expect(fs.existsSync(process.cwd()+"/testdir")).toBe(true);

@@ -15,7 +15,7 @@ describe("cleanupOnExceptions", function(){
 
   it("creates cell instance as daemon", function(next){
     tissue.start(spawnOptions, function(c){
-      setTimeout(next, 1000)
+      setTimeout(next, 500)
     })
   });
 

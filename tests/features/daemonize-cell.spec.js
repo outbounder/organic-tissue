@@ -16,12 +16,12 @@ describe("daemonize-cell", function(){
     tissue.start(spawnOptions, function(c){
       daemonCell = c.data;
       setTimeout(function(){
-        var markerPath = tissue.getCellMarker("daemons", path.basename(spawnOptions.target), daemonCell.pid);
+        var markerPath = tissue.getCellMarker("daemons", "daemonCell.js", daemonCell.pid);
         expect(fs.existsSync(markerPath)).toBe(true);
-        expect(fs.existsSync(spawnOptions.target+".out")).toBe(true);
-        expect(fs.existsSync(spawnOptions.target+".err")).toBe(true);
+        expect(fs.existsSync(path.normalize(__dirname+"/../data/daemonCell.js.out"))).toBe(true);
+        expect(fs.existsSync(path.normalize(__dirname+"/../data/daemonCell.js.err"))).toBe(true);
         next();
-      }, 2000);
+      }, 500);
     })
   });
   it("lists the cell", function(next){
@@ -32,33 +32,32 @@ describe("daemonize-cell", function(){
     });
   });
   it("restarts the cell", function(next){
-    tissue.restart({target: daemonCell.pid}, function(c){
+    tissue.restart(spawnOptions, function(c){
+      daemonCell = c.data
       setTimeout(function(){
         tissue.list({target: "daemons"}, function(c){
           expect(c.data.length).toBe(1);
           expect(c.data[0].pid).not.toBe(daemonCell.pid);
-          daemonCell = c.data[0]
           next();
         })
-      }, 2000)
+      }, 500)
     });
   });
   it("kills the cell", function(next){
-    tissue.stop({target: "daemonCell.js"}, function(c){
-      expect(c.data.length).toBe(1)
-      expect(c.data[0].pid).toBe(daemonCell.pid)
+    tissue.stop(spawnOptions, function(c){
+      expect(c.data).toBe(daemonCell.pid)
       setTimeout(function(){
-        var markerPath = tissue.getCellMarker("daemons", path.basename(spawnOptions.target), daemonCell.pid);
+        var markerPath = tissue.getCellMarker("daemons", "daemonCell.js", daemonCell.pid);
         expect(fs.existsSync(markerPath)).toBe(false);
         next();
-      }, 2000);
+      }, 500);
     });
   })
   it("lists no cells", function(next){
     tissue.list({target: "daemons"}, function(c){
       expect(c.data.length).toBe(0);
-      fs.unlink(spawnOptions.target+".out");
-      fs.unlink(spawnOptions.target+".err");
+      fs.unlinkSync(path.normalize(__dirname+"/../data/daemonCell.js.out"));
+      fs.unlinkSync(path.normalize(__dirname+"/../data/daemonCell.js.err"));
       next();
     });
   });

@@ -13,7 +13,7 @@ var getUserHome = function () {
 
 var checkPid = function(pid, callback) {
   if(process.platform.indexOf("win") === 0 && process.platform != "darwin") {
-    throw new Error("Windows not supported yet");
+    throw new Error("not supported yet");
   } else {
     child_process.exec("ps -p "+pid, function(err, stdout, stderr){
       callback(null, stdout.toString().indexOf(pid) !== -1);
@@ -81,23 +81,30 @@ module.exports = Organel.extend(function Tissue(plasma, config){
       }));
   }
 },{
+  resolveCWD: function(c) {
+    if(c.target && !c.cwd) { 
+      // no current working directory provided
+      if(c.target.indexOf("/") !== 0 && c.target.indexOf(":") !== 1) {
+        // target is not full path, so use process.cwd()
+        c.cwd = process.cwd()
+      } else{
+        // target is full path, use its dir as cwd
+        c.cwd = path.dirname(c.target)
+        c.target = c.target.replace(path.dirname(c.target)+path.sep, "")
+      }
+    }
+  },
   getCellMarker: function(tissue, filename, pid) {
     if(tissue && filename && pid)
       return path.join(getUserHome(),".organic", tissue, filename)+"."+pid;
     return path.join(getUserHome(),".organic", this.config.bindTo, path.basename(process.argv[1]))+"."+process.pid;
   },
   start: function(c, callback){
-
     var argv = c.argv || [];
-
     var stdio = [];
-
-    if(c.target && !c.cwd) {
-      if(c.target.indexOf("/") !== 0 && c.target.indexOf(":") !== 1)
-        c.cwd = process.cwd()
-      else
-        c.cwd = path.dirname(c.target)
-    }
+    
+    this.resolveCWD(c)
+    
     if(c.target && c.output !== false)  {
       var err = out = path.join(c.cwd, path.basename(c.target));
       out = fs.openSync(out+".out", 'a');
@@ -125,55 +132,37 @@ module.exports = Organel.extend(function Tissue(plasma, config){
     }
 
     childCell.unref();
-
     c.data = childCell;
-    if(callback) callback(c);
+
+    if(c.target)
+      fs.writeFile(path.join(c.cwd, c.target+".pid"), childCell.pid, function(err){
+        if(err) return callback && callback(err)
+        callback && callback(c)
+      })
+    else
+      callback && callback(c)
   },
   stop: function(c, callback){
-    if(isNaN(c.target)) {
-      this.list({}, function(r){
-        var stopped = [];
-        r.data.forEach(function(entry){
-          if(entry.name == c.target || entry.tissue == c.target || entry.pid == c.target) {
-            process.kill(entry.pid);
-            stopped.push(entry);
-          }
-        });
-        if(callback) callback({data: stopped});
+    this.resolveCWD(c)
+
+    var pidFile = path.join(c.cwd, c.target+".pid")
+    fs.readFile(pidFile, function(err, data){
+      if(err) return callback && callback(err)
+      data = parseInt(data.toString())
+      process.kill(data)
+      fs.unlink(pidFile, function(err){
+        if(err) return callback && callback(err)
+        callback && callback({data: data})
       })
-    } else {
-      process.kill(c.target)
-      if(callback) callback(c.target)
-    }
+    })
   },
   restart: function(c, callback) {
-    var self = this
+    this.resolveCWD(c)
 
-    this.list({}, function(r){
-      var restarted = [];
-      async.each(r.data, function(entry, next){
-        if(entry.name == c.target || entry.tissue == c.target || entry.pid == c.target) {
-          fs.readFile(entry.marker, function(err, data){
-            if(err) return;
-            try{
-              data = JSON.parse(data.toString())
-            }catch(e){
-              return next(e)
-            }
-            process.kill(entry.pid);
-            self.start({target: path.join(data.source,entry.name), cwd: data.cwd}, function(started){
-              restarted.push(_.extend({}, entry, {
-                pid: started.data.pid
-              }));
-              next()
-            })
-          })
-        } else
-          next()
-      }, function(err){
-        if(err) return callback(err)
-        if(callback) callback({data: restarted});
-      });
+    var self = this
+    this.stop(c, function(r){
+      if(r instanceof Error) return callback && callback(r)
+      self.start(c, callback)
     })
   },
   list: function(c, callback){

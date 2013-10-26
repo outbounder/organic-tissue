@@ -19,7 +19,7 @@ describe("cleanupAllDown", function(){
   it("creates cell instance as daemon", function(next){
     tissue.start(spawnOptions, function(c){
       daemonCell = c.data;
-      setTimeout(next, 2000)
+      setTimeout(next, 500)
     })
   });
 
@@ -42,7 +42,7 @@ describe("cleanupAllDown", function(){
     });
   });
   it("kills the cell", function(next){
-    tissue.stop({target: daemonCell.pid}, function(c){
+    tissue.stop(spawnOptions, function(c){
       next()
     });
   })
