@@ -17,7 +17,7 @@ var checkPid = function(pid, callback) {
   } else {
     child_process.exec("ps -p "+pid, function(err, stdout, stderr){
       callback(null, stdout.toString().indexOf(pid) !== -1);
-    });
+    })
   }
 }
 
@@ -74,11 +74,10 @@ module.exports = Organel.extend(function Tissue(plasma, config){
     if(!fs.existsSync(path.join(getUserHome(),".organic",config.bindTo)))
       shelljs.mkdir('-p', path.join(getUserHome(),".organic",config.bindTo));
 
-    fs.writeFileSync(this.getCellMarker(),
-      JSON.stringify({
-        source: path.dirname(process.argv[1]),
-        cwd: process.cwd()
-      }));
+    fs.writeFileSync(this.getCellMarker(), JSON.stringify({
+      source: path.dirname(process.argv[1]),
+      cwd: process.cwd()
+    }));
   }
 },{
   resolveCWD: function(c) {
